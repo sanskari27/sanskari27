@@ -20,7 +20,6 @@ function init() {
     $(".nav-drawer").addClass("w3-animate-top");
     $("#personal-info").addClass("w3-animate-left");
     $(".introduction").addClass("w3-animate-bottom");
-    $("#snap").fadeIn();
 }
 
 

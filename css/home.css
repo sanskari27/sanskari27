@@ -103,7 +103,8 @@ p{
 
 /*------------------------------- Landing Division --------------------------------*/
 .landing-div{
-    padding: 0 15% 4%;
+    padding: 0 15%;
+    margin-bottom: 4%;
     font-family: 'Ubuntu';
     margin: 0;
 }
@@ -121,6 +122,17 @@ p{
     height: 7px;
     background-color: #fcc165;
     border: 0;
+}
+.my-pic{
+    position: relative;
+    margin-left: 25%;
+    margin-top: -35%;
+}
+
+@media screen and (max-width: 1024px) {
+    .my-pic {
+        visibility: hidden;
+    }
 }
 /*-------------------------------- Header Social Icon ------------------------*/
 
