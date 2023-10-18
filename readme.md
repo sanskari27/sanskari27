@@ -3,8 +3,6 @@
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=sanskar85&label=Profile%20views&color=0e75b6&style=flat" alt="sanskar85" /> </p>
 
-<p align="left"> <a href="https://github.com/ryo-ma/github-profile-trophy"><img src="https://github-profile-trophy.vercel.app/?username=sanskar85" alt="sanskar85" /></a> </p>
-
 - 🔭 I’m currently working on [WhatsappAPI Extension](https://chrome.google.com/webstore/detail/whatsleads/fcgjgjellnemnioihojklppanoldamnd)
 
 - 🌱 I’m currently learning **Next.js**
