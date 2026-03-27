@@ -1,34 +1,87 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
-import { C, NODES, EDGES, CATEGORIES } from './constants';
+import { C, NODES, EDGES, CATEGORIES, type Node, type NodeCategory } from './constants';
 import { getColor, getConnected } from './utils';
 import BootSequence from './components/BootSequence';
 import DetailPanel from './components/DetailPanel';
-import NodeLabels from './components/NodeLabels';
+import NodeLabels, { type LabelPosition } from './components/NodeLabels';
 import TopBar from './components/TopBar';
 import SideNav from './components/SideNav';
 import AboutOverlay from './components/AboutOverlay';
 import BottomHUD from './components/BottomHUD';
 
+type BasicMesh = THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+
+interface NodeMeshData {
+	group: THREE.Group;
+	mesh: BasicMesh;
+	glow: BasicMesh;
+	ring: BasicMesh;
+	node: Node;
+}
+
+interface EdgeMeshData {
+	line: THREE.Line;
+	from: Node;
+	to: Node;
+	mat: THREE.LineBasicMaterial;
+}
+
+interface FlowParticle {
+	mesh: BasicMesh;
+	from: THREE.Vector3;
+	to: THREE.Vector3;
+	t: number;
+	speed: number;
+	fromId: string;
+	toId: string;
+}
+
+interface SceneData {
+	scene: THREE.Scene;
+	camera: THREE.PerspectiveCamera;
+	renderer: THREE.WebGLRenderer;
+	nodeMeshes: Record<string, NodeMeshData>;
+	edgeMeshes: EdgeMeshData[];
+	flowParticles: FlowParticle[];
+	particles: THREE.Points;
+	grid: THREE.Mesh;
+}
+
+interface RotState {
+	theta: number;
+	phi: number;
+	radius: number;
+	targetTheta: number;
+	targetPhi: number;
+	targetRadius: number;
+}
+
+interface MouseState {
+	isDragging: boolean;
+	prevX: number;
+	prevY: number;
+}
+
 export default function App() {
-	const mountRef = useRef(null);
-	const sceneData = useRef({});
-	const mouseRef = useRef({ isDragging: false, prevX: 0, prevY: 0 });
-	const rotRef = useRef({ theta: 0.3, phi: 0.5, radius: 90, targetTheta: 0.3, targetPhi: 0.5, targetRadius: 58 });
+	const mountRef = useRef<HTMLDivElement>(null);
+	const sceneData = useRef<Partial<SceneData>>({});
+	const mouseRef = useRef<MouseState>({ isDragging: false, prevX: 0, prevY: 0 });
+	const rotRef = useRef<RotState>({ theta: 0.3, phi: 0.5, radius: 90, targetTheta: 0.3, targetPhi: 0.5, targetRadius: 58 });
 
 	const [booting, setBooting] = useState(true);
-	const [selected, setSelected] = useState(null);
-	const [hovered, setHovered] = useState(null);
-	const [labelPositions, setLabelPositions] = useState([]);
-	const [activeFilters, setActiveFilters] = useState(new Set(['core', 'competency', 'tech', 'project', 'experience']));
+	const [selected, setSelected] = useState<string | null>(null);
+	const [hovered, setHovered] = useState<string | null>(null);
+	const [labelPositions, setLabelPositions] = useState<LabelPosition[]>([]);
+	const [activeFilters, setActiveFilters] = useState<Set<NodeCategory>>(new Set(['core', 'competency', 'tech', 'project', 'experience']));
 	const [navOpen, setNavOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showAbout, setShowAbout] = useState(false);
 	const [ready, setReady] = useState(false);
 
-	const selectedRef = useRef(null);
-	const hoveredRef = useRef(null);
-	const filtersRef = useRef(activeFilters);
+	const selectedRef = useRef<string | null>(null);
+	const hoveredRef = useRef<string | null>(null);
+	const filtersRef = useRef<Set<NodeCategory>>(activeFilters);
 	const frameRef = useRef(0);
 	const sizeRef = useRef({ w: 0, h: 0 });
 
@@ -68,7 +121,7 @@ export default function App() {
 		renderer.setClearColor(0x04060e);
 		container.appendChild(renderer.domElement);
 
-		// Particles
+		// Background particles
 		const pCount = 3000;
 		const pGeo = new THREE.BufferGeometry();
 		const pPos = new Float32Array(pCount * 3);
@@ -82,7 +135,7 @@ export default function App() {
 		const particles = new THREE.Points(pGeo, pMat);
 		scene.add(particles);
 
-		// Nebula
+		// Nebula planes
 		for (let i = 0; i < 4; i++) {
 			const ng = new THREE.PlaneGeometry(80 + i * 40, 80 + i * 40);
 			const nm = new THREE.MeshBasicMaterial({ color: new THREE.Color(i % 2 === 0 ? 0x0a1a3a : 0x1a0a2a), transparent: true, opacity: 0.03, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
@@ -101,34 +154,39 @@ export default function App() {
 		scene.add(grid);
 
 		// Nodes
-		const nodeMeshes = {};
+		const nodeMeshes: Record<string, NodeMeshData> = {};
 		NODES.forEach((n) => {
 			const color = new THREE.Color(getColor(n.cat));
 			const group = new THREE.Group();
 			group.position.set(...n.pos);
+
 			const geo = new THREE.SphereGeometry(n.size * 0.45, 32, 32);
 			const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1 });
 			const mesh = new THREE.Mesh(geo, mat);
 			group.add(mesh);
+
 			const glowGeo = new THREE.SphereGeometry(n.size * 0.75, 32, 32);
 			const glowMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.1, blending: THREE.AdditiveBlending });
 			const glow = new THREE.Mesh(glowGeo, glowMat);
 			group.add(glow);
+
 			const ringGeo = new THREE.RingGeometry(n.size * 0.7, n.size * 0.85, 48);
 			const ringMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.06, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
 			const ring = new THREE.Mesh(ringGeo, ringMat);
 			group.add(ring);
+
 			if (n.cat === 'core' || n.cat === 'project') {
 				const hg = new THREE.RingGeometry(n.size * 1.1, n.size * 1.2, 6);
 				const hm = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.08, side: THREE.DoubleSide, blending: THREE.AdditiveBlending });
 				group.add(new THREE.Mesh(hg, hm));
 			}
+
 			scene.add(group);
 			nodeMeshes[n.id] = { group, mesh, glow, ring, node: n };
 		});
 
 		// Edges
-		const edgeMeshes = [];
+		const edgeMeshes: EdgeMeshData[] = [];
 		EDGES.forEach(([fId, tId]) => {
 			const f = NODES.find((n) => n.id === fId), t = NODES.find((n) => n.id === tId);
 			if (!f || !t) return;
@@ -140,7 +198,7 @@ export default function App() {
 		});
 
 		// Flow particles
-		const flowParticles = [];
+		const flowParticles: FlowParticle[] = [];
 		EDGES.forEach(([fId, tId], i) => {
 			if (i % 3 !== 0) return;
 			const f = NODES.find((n) => n.id === fId), t = NODES.find((n) => n.id === tId);
@@ -154,11 +212,12 @@ export default function App() {
 
 		sceneData.current = { scene, camera, renderer, nodeMeshes, edgeMeshes, flowParticles, particles, grid };
 
-		let animId;
+		let animId: number;
 		const clock = new THREE.Clock();
+
 		const animate = () => {
 			animId = requestAnimationFrame(animate);
-			const t = clock.getElapsedTime();
+			const elapsed = clock.getElapsedTime();
 			frameRef.current++;
 			const rot = rotRef.current;
 			if (!mouseRef.current.isDragging && !selectedRef.current) rot.targetTheta += 0.0006;
@@ -174,41 +233,46 @@ export default function App() {
 			const filters = filtersRef.current;
 			const sel = selectedRef.current;
 			const hov = hoveredRef.current;
-			const connSel = sel ? getConnected(sel) : new Set();
-			const connHov = hov ? getConnected(hov) : new Set();
+			const connSel = sel ? getConnected(sel) : new Set<string>();
+			const connHov = hov ? getConnected(hov) : new Set<string>();
 
-			Object.values(nodeMeshes).forEach(({ group, glow, ring, node: nd }) => {
+			Object.values(nodeMeshes).forEach(({ group, mesh, glow, ring, node: nd }) => {
 				const vis = filters.has(nd.cat);
 				const isSel = sel === nd.id;
-				const isConn = sel && connSel.has(nd.id);
+				const isConn = sel !== null && connSel.has(nd.id);
 				const isHov = hov === nd.id;
-				const isHovConn = hov && connHov.has(nd.id);
-				const dimmed = sel && !isSel && !isConn;
-				const hovDim = hov && !isHov && !isHovConn && !sel;
+				const isHovConn = hov !== null && connHov.has(nd.id);
+				const dimmed = sel !== null && !isSel && !isConn;
+				const hovDim = hov !== null && !isHov && !isHovConn && sel === null;
 				const targetOp = !vis ? 0 : dimmed ? 0.15 : hovDim ? 0.35 : 1;
-				group.children.forEach((child, ci) => {
-					if (ci === 0) {
-						const cur = child.material.opacity;
-						child.material.opacity = cur + (targetOp - cur) * 0.08;
-					} else if (child === glow) {
-						const pulse = Math.sin(t * 2 + nd.pos[0]) * 0.05 + 0.1;
-						child.material.opacity = (isSel ? 0.25 : isHov ? 0.2 : pulse) * targetOp;
-					} else if (child === ring) {
-						const s = 1 + Math.sin(t * 1.5 + nd.pos[1]) * 0.12;
-						child.scale.set(s, s, s);
-						child.lookAt(camera.position);
-						child.material.opacity = 0.06 * targetOp;
-					} else {
-						child.lookAt(camera.position);
-						child.rotation.z = t * 0.2;
-						child.material.opacity = 0.08 * targetOp;
+
+				const curOp = mesh.material.opacity;
+				mesh.material.opacity = curOp + (targetOp - curOp) * 0.08;
+
+				const pulse = Math.sin(elapsed * 2 + nd.pos[0]) * 0.05 + 0.1;
+				glow.material.opacity = (isSel ? 0.25 : isHov ? 0.2 : pulse) * targetOp;
+
+				const s = 1 + Math.sin(elapsed * 1.5 + nd.pos[1]) * 0.12;
+				ring.scale.set(s, s, s);
+				ring.lookAt(camera.position);
+				ring.material.opacity = 0.06 * targetOp;
+
+				// Hex ring (index 3) for core/project nodes
+				if (nd.cat === 'core' || nd.cat === 'project') {
+					const hexRing = group.children[3] as BasicMesh | undefined;
+					if (hexRing) {
+						hexRing.lookAt(camera.position);
+						hexRing.rotation.z = elapsed * 0.2;
+						hexRing.material.opacity = 0.08 * targetOp;
 					}
-				});
+				}
+
 				if (isSel) {
-					const s = 1 + Math.sin(t * 3) * 0.08;
-					group.scale.set(s, s, s);
-				} else if (isHov) group.scale.set(1.12, 1.12, 1.12);
-				else {
+					const sc = 1 + Math.sin(elapsed * 3) * 0.08;
+					group.scale.set(sc, sc, sc);
+				} else if (isHov) {
+					group.scale.set(1.12, 1.12, 1.12);
+				} else {
 					const cs = group.scale.x;
 					const ns = cs + (1 - cs) * 0.08;
 					group.scale.set(ns, ns, ns);
@@ -217,46 +281,47 @@ export default function App() {
 
 			edgeMeshes.forEach(({ mat: m, from: f, to: tt }) => {
 				const fv = filters.has(f.cat), tv = filters.has(tt.cat), bv = fv && tv;
-				const isAct = sel && (f.id === sel || tt.id === sel) && bv;
-				const isHovAct = hov && (f.id === hov || tt.id === hov) && bv;
-				const dim = sel && !isAct;
-				m.opacity = !bv ? 0 : isAct ? 0.6 : isHovAct && !sel ? 0.4 : dim ? 0.05 : 0.15;
-				m.color.set(isAct ? C.edgeActive : isHovAct && !sel ? C.core : C.edge);
+				const isAct = sel !== null && (f.id === sel || tt.id === sel) && bv;
+				const isHovAct = hov !== null && (f.id === hov || tt.id === hov) && bv;
+				const dim = sel !== null && !isAct;
+				m.opacity = !bv ? 0 : isAct ? 0.6 : (isHovAct && sel === null) ? 0.4 : dim ? 0.05 : 0.15;
+				m.color.set(isAct ? C.edgeActive : (isHovAct && sel === null) ? C.core : C.edge);
 			});
 
 			flowParticles.forEach((fp) => {
 				fp.t += fp.speed;
 				if (fp.t > 1) fp.t = 0;
 				fp.mesh.position.lerpVectors(fp.from, fp.to, fp.t);
-				const fv = filters.has(NODES.find((n) => n.id === fp.fromId)?.cat);
-				const tv = filters.has(NODES.find((n) => n.id === fp.toId)?.cat);
+				const fv = filters.has(NODES.find((n) => n.id === fp.fromId)?.cat ?? 'tech');
+				const tv = filters.has(NODES.find((n) => n.id === fp.toId)?.cat ?? 'tech');
 				fp.mesh.material.opacity = fv && tv ? Math.sin(fp.t * Math.PI) * 0.6 : 0;
 			});
 
-			particles.rotation.y = t * 0.008;
-			particles.rotation.x = t * 0.003;
-			const gp = grid.geometry.attributes.position;
+			particles.rotation.y = elapsed * 0.008;
+			particles.rotation.x = elapsed * 0.003;
+			const gp = grid.geometry.attributes['position'] as THREE.BufferAttribute;
 			for (let i = 0; i < gp.count; i++) {
 				const x = gp.getX(i), z = gp.getY(i);
-				gp.setZ(i, Math.sin(x * 0.08 + t * 0.4) * Math.cos(z * 0.08 + t * 0.25) * 0.6);
+				gp.setZ(i, Math.sin(x * 0.08 + elapsed * 0.4) * Math.cos(z * 0.08 + elapsed * 0.25) * 0.6);
 			}
 			gp.needsUpdate = true;
 			renderer.render(scene, camera);
 
 			if (frameRef.current % 2 === 0) {
 				const { w: sw, h: sh } = sizeRef.current;
-				const nl = NODES.map((n) => {
+				const nl: LabelPosition[] = NODES.map((n) => {
 					const v = new THREE.Vector3(...n.pos);
 					v.project(camera);
-					const x = (v.x * 0.5 + 0.5) * sw, y = (-v.y * 0.5 + 0.5) * sh;
+					const lx = (v.x * 0.5 + 0.5) * sw, ly = (-v.y * 0.5 + 0.5) * sh;
 					const dist = camera.position.distanceTo(new THREE.Vector3(...n.pos));
 					const op = Math.max(0.15, Math.min(1, 1 - (dist - 15) / 65));
 					const sc = Math.max(0.45, Math.min(1.3, 28 / dist));
-					return { id: n.id, label: n.label, cat: n.cat, x, y, opacity: op, scale: sc, behind: v.z > 1 };
+					return { id: n.id, label: n.label, cat: n.cat, x: lx, y: ly, opacity: op, scale: sc, behind: v.z > 1 };
 				});
 				setLabelPositions(nl);
 			}
 		};
+
 		animate();
 		setTimeout(() => setReady(true), 500);
 
@@ -268,6 +333,7 @@ export default function App() {
 			renderer.setSize(nw, nh);
 		};
 		window.addEventListener('resize', onResize);
+
 		return () => {
 			cancelAnimationFrame(animId);
 			window.removeEventListener('resize', onResize);
@@ -276,41 +342,56 @@ export default function App() {
 		};
 	}, []);
 
-	const handlePointerDown = useCallback((e) => {
+	const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
 		mouseRef.current.isDragging = true;
-		const cx = e.clientX || e.touches?.[0]?.clientX || 0;
-		const cy = e.clientY || e.touches?.[0]?.clientY || 0;
-		mouseRef.current.prevX = cx;
-		mouseRef.current.prevY = cy;
+		mouseRef.current.prevX = e.clientX;
+		mouseRef.current.prevY = e.clientY;
 	}, []);
 
-	const handlePointerMove = useCallback((e) => {
+	const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
 		const m = mouseRef.current;
-		const cx = e.clientX || e.touches?.[0]?.clientX || 0;
-		const cy = e.clientY || e.touches?.[0]?.clientY || 0;
 		if (m.isDragging) {
-			const dx = cx - m.prevX, dy = cy - m.prevY;
+			const dx = e.clientX - m.prevX, dy = e.clientY - m.prevY;
 			rotRef.current.targetTheta -= dx * 0.005;
 			rotRef.current.targetPhi += dy * 0.005;
 			rotRef.current.targetPhi = Math.max(0.25, Math.min(Math.PI - 0.25, rotRef.current.targetPhi));
-			m.prevX = cx;
-			m.prevY = cy;
+			m.prevX = e.clientX;
+			m.prevY = e.clientY;
 		}
 	}, []);
 
 	const handlePointerUp = useCallback(() => { mouseRef.current.isDragging = false; }, []);
 
-	const handleWheel = useCallback((e) => {
+	const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+		mouseRef.current.isDragging = true;
+		const touch = e.touches[0];
+		if (touch) { mouseRef.current.prevX = touch.clientX; mouseRef.current.prevY = touch.clientY; }
+	}, []);
+
+	const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+		const m = mouseRef.current;
+		const touch = e.touches[0];
+		if (m.isDragging && touch) {
+			const dx = touch.clientX - m.prevX, dy = touch.clientY - m.prevY;
+			rotRef.current.targetTheta -= dx * 0.005;
+			rotRef.current.targetPhi += dy * 0.005;
+			rotRef.current.targetPhi = Math.max(0.25, Math.min(Math.PI - 0.25, rotRef.current.targetPhi));
+			m.prevX = touch.clientX;
+			m.prevY = touch.clientY;
+		}
+	}, []);
+
+	const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
 		rotRef.current.targetRadius += e.deltaY * 0.035;
 		rotRef.current.targetRadius = Math.max(18, Math.min(110, rotRef.current.targetRadius));
 	}, []);
 
-	const handleNodeClick = useCallback((id) => {
+	const handleNodeClick = useCallback((id: string) => {
 		setSelected((p) => (p === id ? null : id));
 		setShowAbout(false);
 	}, []);
 
-	const toggleFilter = useCallback((cat) => {
+	const toggleFilter = useCallback((cat: NodeCategory) => {
 		setActiveFilters((prev) => {
 			const n = new Set(prev);
 			if (n.has(cat)) { if (n.size > 1) n.delete(cat); } else n.add(cat);
@@ -324,49 +405,23 @@ export default function App() {
 		return NODES.filter((n) => n.label.toLowerCase().includes(q) || n.cat.toLowerCase().includes(q));
 	}, [searchQuery]);
 
-	const connectedToSelected = useMemo(() => (selected ? getConnected(selected) : new Set()), [selected]);
+	const connectedToSelected = useMemo(() => (selected ? getConnected(selected) : new Set<string>()), [selected]);
 
 	const handleBootComplete = useCallback(() => setBooting(false), []);
 
 	return (
-		<div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: C.bg, position: 'relative' }}>
-			<link
-				href='https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500&family=Exo+2:wght@300;400;500;600;700&display=swap'
-				rel='stylesheet'
-			/>
-			<style>{`
-        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes slideInRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
-        @keyframes slideInLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
-        @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
-        @keyframes scanline{0%{top:-2px}100%{top:100%}}
-        @keyframes breathe{0%,100%{box-shadow:0 0 8px rgba(0,229,255,0.15)}50%{box-shadow:0 0 20px rgba(0,229,255,0.3)}}
-        @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        .node-label{cursor:pointer;transition:transform 0.15s ease,filter 0.15s ease;user-select:none}
-        .node-label:hover{filter:brightness(1.5) drop-shadow(0 0 8px currentColor)}
-        .hud{font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(0,229,255,0.35);letter-spacing:2px;text-transform:uppercase}
-        .nav-btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:rgba(200,214,229,0.5);padding:8px 14px;border-radius:4px;cursor:pointer;font-family:'Exo 2',sans-serif;font-size:11px;transition:all 0.2s;letter-spacing:1px;display:flex;align-items:center;gap:8px;width:100%;text-align:left}
-        .nav-btn:hover{background:rgba(0,229,255,0.06);border-color:rgba(0,229,255,0.2);color:rgba(200,214,229,0.8)}
-        .nav-btn.active{background:rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.3);color:#00e5ff}
-        .filter-chip{padding:5px 12px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;transition:all 0.2s;border:1px solid;user-select:none}
-        .search-input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#c8d6e5;padding:8px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;width:100%;outline:none;letter-spacing:1px;transition:border-color 0.2s}
-        .search-input:focus{border-color:rgba(0,229,255,0.3)}
-        .search-input::placeholder{color:rgba(200,214,229,0.2)}
-        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,229,255,0.15);border-radius:2px}
-        *{box-sizing:border-box;margin:0;padding:0}
-      `}</style>
-
+		<div className="w-screen h-screen overflow-hidden relative cursor-grab" style={{ background: C.bg }}>
 			{booting && <BootSequence onComplete={handleBootComplete} />}
 
 			<div
 				ref={mountRef}
-				style={{ position: 'absolute', inset: 0, cursor: 'grab' }}
+				className="absolute inset-0"
 				onPointerDown={handlePointerDown}
 				onPointerMove={handlePointerMove}
 				onPointerUp={handlePointerUp}
 				onPointerLeave={handlePointerUp}
-				onTouchStart={handlePointerDown}
-				onTouchMove={handlePointerMove}
+				onTouchStart={handleTouchStart}
+				onTouchMove={handleTouchMove}
 				onTouchEnd={handlePointerUp}
 				onWheel={handleWheel}
 			/>
@@ -388,7 +443,7 @@ export default function App() {
 				onMenuToggle={() => { setNavOpen(!navOpen); setShowAbout(false); }}
 				onAbout={() => { setShowAbout(!showAbout); setSelected(null); setNavOpen(false); }}
 				onProjects={() => {
-					setActiveFilters(new Set(['core', 'project']));
+					setActiveFilters(new Set<NodeCategory>(['core', 'project']));
 					setSelected(null);
 					setShowAbout(false);
 					setNavOpen(false);
@@ -406,7 +461,7 @@ export default function App() {
 					onSearchChange={setSearchQuery}
 					onNodeClick={(id) => { handleNodeClick(id); setSearchQuery(''); setNavOpen(false); }}
 					onFilterToggle={toggleFilter}
-					onShowAll={() => setActiveFilters(new Set(CATEGORIES.map((c) => c.id)))}
+					onShowAll={() => setActiveFilters(new Set<NodeCategory>(CATEGORIES.map((c) => c.id)))}
 				/>
 			)}
 

@@ -10,9 +10,41 @@ export const C = {
 	text: '#c8d6e5',
 	panelBg: 'rgba(6,10,24,0.92)',
 	panelBorder: 'rgba(0,229,255,0.12)',
-};
+} as const;
 
-export const NODES = [
+export type NodeCategory = 'core' | 'competency' | 'tech' | 'project' | 'experience';
+
+export interface Node {
+	id: string;
+	label: string;
+	cat: NodeCategory;
+	pos: [number, number, number];
+	size: number;
+}
+
+export type Edge = [string, string];
+
+export interface DetailLink {
+	label: string;
+	url: string;
+}
+
+export interface Detail {
+	title: string;
+	subtitle: string;
+	desc: string;
+	tags: string[];
+	link?: string;
+	links?: DetailLink[];
+}
+
+export interface Category {
+	id: NodeCategory;
+	label: string;
+	color: string;
+}
+
+export const NODES: Node[] = [
 	{ id: 'sanskar', label: 'SANSKAR', cat: 'core', pos: [0, 0, 0], size: 2.2 },
 	{ id: 'backend', label: 'Backend Architecture', cat: 'competency', pos: [10, 4, 6], size: 1.2 },
 	{ id: 'realtime', label: 'Real-time Systems', cat: 'competency', pos: [-9, -3, 9], size: 1.2 },
@@ -46,7 +78,7 @@ export const NODES = [
 	{ id: 'exp_indie', label: 'Independent (3+ yrs)', cat: 'experience', pos: [-6, -10, -4], size: 0.85 },
 ];
 
-export const EDGES = [
+export const EDGES: Edge[] = [
 	['sanskar', 'backend'],
 	['sanskar', 'realtime'],
 	['sanskar', 'devtools'],
@@ -98,7 +130,7 @@ export const EDGES = [
 	['exp_indie', 'mobile'],
 ];
 
-export const DETAILS = {
+export const DETAILS: Record<string, Detail> = {
 	sanskar: {
 		title: 'Sanskar',
 		subtitle: 'Full-Stack Systems Engineer',
@@ -204,7 +236,7 @@ export const DETAILS = {
 	},
 };
 
-export const CATEGORIES = [
+export const CATEGORIES: Category[] = [
 	{ id: 'core', label: 'Core', color: C.core },
 	{ id: 'competency', label: 'Competencies', color: C.competency },
 	{ id: 'tech', label: 'Technologies', color: C.tech },

@@ -1,8 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { C, NODES, EDGES } from '../constants';
 
-export default function BootSequence({ onComplete }) {
-	const [lines, setLines] = useState([]);
+interface BootSequenceProps {
+	onComplete: () => void;
+}
+
+export default function BootSequence({ onComplete }: BootSequenceProps) {
+	const [lines, setLines] = useState<string[]>([]);
 	const [phase, setPhase] = useState(0);
 
 	const bootLines = useMemo(
@@ -37,46 +41,32 @@ export default function BootSequence({ onComplete }) {
 
 	return (
 		<div
+			className="fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-[600ms]"
 			style={{
-				position: 'fixed',
-				inset: 0,
-				zIndex: 9999,
 				background: C.bg,
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'center',
+				fontFamily: "'JetBrains Mono', monospace",
 				opacity: phase === 1 ? 0 : 1,
-				transition: 'opacity 0.6s',
-				fontFamily: "'JetBrains Mono',monospace",
 			}}
 		>
-			<div style={{ maxWidth: 600, width: '90%', padding: 32 }}>
+			<div className="max-w-[600px] w-[90%] p-8">
 				<div
-					style={{
-						fontFamily: "'Orbitron'",
-						fontSize: 11,
-						color: C.core,
-						letterSpacing: 6,
-						marginBottom: 24,
-						opacity: 0.5,
-					}}
+					className="mb-6 opacity-50"
+					style={{ fontFamily: "'Orbitron'", fontSize: 11, color: C.core, letterSpacing: 6 }}
 				>
 					SYS://PORTFOLIO_MESH
 				</div>
 				{lines.map((line, i) => (
 					<div
 						key={i}
+						className="mb-1.5 leading-relaxed"
 						style={{
 							fontSize: 12,
-							color:
-								line.includes('100%') || line.includes('LAUNCHING')
-									? C.core
-									: line.startsWith('>')
-										? `rgba(200,214,229,0.8)`
-										: `rgba(200,214,229,0.45)`,
+							color: line.includes('100%') || line.includes('LAUNCHING')
+								? C.core
+								: line.startsWith('>')
+									? 'rgba(200,214,229,0.8)'
+									: 'rgba(200,214,229,0.45)',
 							fontWeight: line.includes('LAUNCHING') ? 600 : 400,
-							marginBottom: 6,
-							lineHeight: 1.6,
 							animation: 'fadeIn 0.3s ease',
 						}}
 					>
@@ -84,12 +74,8 @@ export default function BootSequence({ onComplete }) {
 					</div>
 				))}
 				<div
-					style={{
-						marginTop: 20,
-						height: 2,
-						background: `linear-gradient(to right,${C.core},transparent)`,
-						opacity: 0.4,
-					}}
+					className="mt-5 h-0.5 opacity-40"
+					style={{ background: `linear-gradient(to right,${C.core},transparent)` }}
 				/>
 			</div>
 		</div>
