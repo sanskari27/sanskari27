@@ -41,6 +41,7 @@ I specialize in designing **high-performance backend architectures**, **real-tim
 ![TypeScript](https://img.shields.io/badge/-TypeScript-000?&logo=typescript)
 ![JavaScript](https://img.shields.io/badge/-JavaScript-000?&logo=javascript)
 ![Python](https://img.shields.io/badge/-Python-000?&logo=python)
+![Java](https://img.shields.io/badge/-Java-000?&logo=java)
 
 ### ⚛️ Frontend
 ![React](https://img.shields.io/badge/-React-000?&logo=react)
@@ -84,17 +85,6 @@ A VS Code extension that consolidates team workflows into a single productivity 
 - Built with React + Vite + Tailwind  
 
 👉 https://github.com/sanskari27/devxcode  
-
----
-
-### 🔹 vision2ui  
-Transforms UI screenshots into structured components using a pipeline-based architecture.
-
-- Region detection + embedding-based matching  
-- Hybrid system (TypeScript + Python services)  
-- Strong system design focus  
-
-👉 https://github.com/sanskari27/vision2ui  
 
 ---
 
