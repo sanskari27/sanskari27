@@ -19,7 +19,7 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 
 	return (
 		<div
-			className="absolute top-0 right-0 w-[400px] h-full flex flex-col z-50 backdrop-blur-[20px]"
+			className='absolute top-0 right-0 w-[400px] h-full flex flex-col z-50 backdrop-blur-[20px]'
 			style={{
 				background: C.panelBg,
 				borderLeft: `1px solid ${C.panelBorder}`,
@@ -29,24 +29,21 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 		>
 			{/* Scanline effect */}
 			<div
-				className="absolute w-full h-0.5 pointer-events-none"
+				className='absolute w-full h-0.5 pointer-events-none'
 				style={{
 					background: `linear-gradient(to right,transparent,${accent}11,transparent)`,
 					animation: 'scanline 5s linear infinite',
 				}}
 			/>
 
-		{/* Header */}
-		<div className="pt-8 px-7 pb-0 shrink-0">
-				<div className="flex justify-between items-start">
+			{/* Header */}
+			<div className='pt-8 px-7 pb-0 shrink-0'>
+				<div className='flex justify-between items-start'>
 					<div>
-						<div className="flex items-center gap-2.5 mb-1.5">
-							<div
-								className="w-2 h-2 rounded-full"
-								style={{ background: accent, boxShadow: `0 0 12px ${accent}` }}
-							/>
+						<div className='flex items-center gap-2.5 mb-1.5'>
+							<div className='w-2 h-2 rounded-full' style={{ background: accent, boxShadow: `0 0 12px ${accent}` }} />
 							<span
-								className="uppercase opacity-70"
+								className='uppercase opacity-70'
 								style={{ fontFamily: "'Exo 2'", fontSize: 12, color: accent, letterSpacing: 3 }}
 							>
 								{node.cat}
@@ -56,7 +53,7 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 							{detail.title}
 						</div>
 						<div
-							className="mt-1"
+							className='mt-1'
 							style={{ fontFamily: "'Exo 2'", fontSize: 14, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 }}
 						>
 							{detail.subtitle}
@@ -64,7 +61,7 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 					</div>
 					<button
 						onClick={onClose}
-						className="w-8 h-8 rounded flex items-center justify-center text-base cursor-pointer transition-all duration-200 shrink-0"
+						className='w-8 h-8 rounded flex items-center justify-center text-base cursor-pointer transition-all duration-200 shrink-0'
 						style={{
 							background: 'rgba(255,255,255,0.05)',
 							border: '1px solid rgba(255,255,255,0.1)',
@@ -83,30 +80,30 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 					</button>
 				</div>
 				<div
-					className="w-[50px] h-0.5 my-4"
+					className='w-[50px] h-0.5 my-4'
 					style={{ background: `linear-gradient(to right,${accent},transparent)` }}
 				/>
 			</div>
 
-		{/* Scrollable content */}
-		<div className="flex-1 overflow-y-auto px-7 pb-8">
-			<p
-				className="mb-6"
-				style={{ fontFamily: "'Exo 2'", fontSize: 15, color: 'rgba(200,214,229,0.7)', lineHeight: 1.8 }}
+			{/* Scrollable content */}
+			<div className='flex-1 overflow-y-auto px-7 pb-8'>
+				<p
+					className='mb-6'
+					style={{ fontFamily: "'Exo 2'", fontSize: 15, color: 'rgba(200,214,229,0.7)', lineHeight: 1.8 }}
 				>
 					{detail.desc}
 				</p>
 
-				<div className="flex flex-wrap gap-2 mb-7">
+				<div className='flex flex-wrap gap-2 mb-7'>
 					{detail.tags.map((tag) => (
 						<span
 							key={tag}
-							className="px-3 py-1 rounded-sm"
-						style={{
-							border: `1px solid ${accent}30`,
-							fontFamily: "'JetBrains Mono'",
-							fontSize: 12,
-							color: `${accent}cc`,
+							className='px-3 py-1 rounded-sm'
+							style={{
+								border: `1px solid ${accent}30`,
+								fontFamily: "'JetBrains Mono'",
+								fontSize: 12,
+								color: `${accent}cc`,
 								letterSpacing: 1,
 								background: `${accent}08`,
 							}}
@@ -118,46 +115,57 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 
 				{detail.link && (
 					<div
-						className="px-4 py-3 rounded mb-6"
+						className='px-4 py-3 rounded mb-6'
 						style={{
 							background: 'rgba(255,255,255,0.03)',
 							border: `1px solid ${accent}20`,
 						}}
 					>
 						<div
-							className="mb-1.5"
-						style={{ fontFamily: "'JetBrains Mono'", fontSize: 12, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 }}
-					>
-						SOURCE CODE
+							className='mb-1.5'
+							style={{
+								fontFamily: "'JetBrains Mono'",
+								fontSize: 12,
+								color: 'rgba(255,255,255,0.35)',
+								letterSpacing: 2,
+							}}
+						>
+							SOURCE CODE
 						</div>
-						<div style={{ fontFamily: "'JetBrains Mono'", fontSize: 14, color: accent }}>
-							↗ {detail.link}
-						</div>
+						<div style={{ fontFamily: "'JetBrains Mono'", fontSize: 14, color: accent }}>↗ {detail.link}</div>
 					</div>
 				)}
 
 				{detail.links && (
-					<div className="mb-6">
+					<div className='mb-6'>
 						<div
-							className="mb-2.5"
-						style={{ fontFamily: "'JetBrains Mono'", fontSize: 12, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 }}
-					>
-						LINKS
+							className='mb-2.5'
+							style={{
+								fontFamily: "'JetBrains Mono'",
+								fontSize: 12,
+								color: 'rgba(255,255,255,0.35)',
+								letterSpacing: 2,
+							}}
+						>
+							LINKS
 						</div>
 						{detail.links.map((l) => (
-							<div
+							<a
 								key={l.label}
-								className="px-3.5 py-2 rounded mb-1.5 cursor-pointer"
+								className='px-3.5 py-2 rounded mb-1.5 cursor-pointer block'
 								style={{
 									background: 'rgba(255,255,255,0.03)',
 									border: `1px solid ${accent}15`,
-								fontFamily: "'JetBrains Mono'",
-								fontSize: 13,
-								color: accent,
+									fontFamily: "'JetBrains Mono'",
+									fontSize: 13,
+									color: accent,
 								}}
+								href={l.url}
+								target='_blank'
+								rel='noopener noreferrer'
 							>
 								↗ {l.label} — {l.url}
-							</div>
+							</a>
 						))}
 					</div>
 				)}
@@ -165,17 +173,22 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 				{connNodes.length > 0 && (
 					<div>
 						<div
-							className="mb-2.5"
-						style={{ fontFamily: "'JetBrains Mono'", fontSize: 12, color: 'rgba(255,255,255,0.35)', letterSpacing: 2 }}
-					>
-						CONNECTED NODES ({connNodes.length})
+							className='mb-2.5'
+							style={{
+								fontFamily: "'JetBrains Mono'",
+								fontSize: 12,
+								color: 'rgba(255,255,255,0.35)',
+								letterSpacing: 2,
+							}}
+						>
+							CONNECTED NODES ({connNodes.length})
 						</div>
-						<div className="flex flex-col gap-1">
+						<div className='flex flex-col gap-1'>
 							{connNodes.map((cn) => (
 								<button
 									key={cn.id}
 									onClick={() => onNavigate(cn.id)}
-									className="flex items-center gap-2.5 px-3 py-2 rounded cursor-pointer text-left transition-all duration-200 w-full"
+									className='flex items-center gap-2.5 px-3 py-2 rounded cursor-pointer text-left transition-all duration-200 w-full'
 									style={{
 										background: 'rgba(255,255,255,0.02)',
 										border: '1px solid rgba(255,255,255,0.06)',
@@ -190,7 +203,7 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 									}}
 								>
 									<div
-										className="w-1.5 h-1.5 rounded-full shrink-0"
+										className='w-1.5 h-1.5 rounded-full shrink-0'
 										style={{
 											background: getColor(cn.cat),
 											boxShadow: `0 0 6px ${getColor(cn.cat)}`,
@@ -200,8 +213,13 @@ export default function DetailPanel({ nodeId, onClose, onNavigate }: DetailPanel
 										{cn.label}
 									</span>
 									<span
-										className="ml-auto uppercase"
-										style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, color: 'rgba(255,255,255,0.25)', letterSpacing: 1 }}
+										className='ml-auto uppercase'
+										style={{
+											fontFamily: "'JetBrains Mono'",
+											fontSize: 11,
+											color: 'rgba(255,255,255,0.25)',
+											letterSpacing: 1,
+										}}
 									>
 										{cn.cat}
 									</span>
