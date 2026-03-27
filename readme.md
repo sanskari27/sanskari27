@@ -127,8 +127,7 @@ Full-stack lead management & communication platform.
 
 ## 🐍 Contribution Graph
 
-![snake light](https://github.com/sanskari27/sanskari27/blob/output/github-contribution-grid-snake.svg)
-![snake dark](https://github.com/sanskari27/sanskari27/blob/output/github-contribution-grid-snake-dark.svg)
+![snake gif](https://github.com/sanskari27/sanskari27/blob/output/github-contribution-grid-snake.svg)
 
 ---
 
