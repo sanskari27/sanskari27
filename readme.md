@@ -116,12 +116,13 @@ Full-stack lead management & communication platform.
 - Real-time communication  
 
 ---
+## 📊 GitHub Activity
 
-## 📊 GitHub Stats
+![GitHub Streak](https://streak-stats.demolab.com?user=sanskari27&theme=tokyonight)
 
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username=sanskari27&show_icons=true&theme=tokyonight&cache_seconds=1800)
+![Summary](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=sanskari27&theme=tokyonight)
 
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=sanskari27&layout=compact&theme=tokyonight&cache_seconds=1800)
+![Top Languages](https://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username=sanskari27&theme=tokyonight)
 
 ---
 
